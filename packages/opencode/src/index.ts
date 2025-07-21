@@ -19,6 +19,11 @@ import { McpCommand } from "./cli/cmd/mcp"
 import { GithubCommand } from "./cli/cmd/github"
 import { ExportCommand } from "./cli/cmd/export"
 import { AttachCommand } from "./cli/cmd/attach"
+import { InstallGithubCommand } from "./cli/cmd/install-github"
+import { Trace } from "./trace"
+import { UsageCommand } from "./cli/cmd/usage"
+
+Trace.init()
 
 const cancel = new AbortController()
 
@@ -81,6 +86,8 @@ const cli = yargs(hideBin(process.argv))
   .command(StatsCommand)
   .command(ExportCommand)
   .command(GithubCommand)
+  .command(InstallGithubCommand)
+  .command(UsageCommand)
   .fail((msg) => {
     if (
       msg.startsWith("Unknown argument") ||

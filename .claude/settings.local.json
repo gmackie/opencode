@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/stainless:*)",
+      "Bash(ls:*)",
+      "Bash(bun run:*)",
+      "Bash(npm install:*)",
+      "Bash(find:*)",
+      "Bash(source:*)",
+      "Bash(node:*)"
+    ],
+    "deny": []
+  }
+}

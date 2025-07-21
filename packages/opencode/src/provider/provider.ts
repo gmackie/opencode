@@ -131,10 +131,35 @@ export namespace Provider {
         },
       }
     },
-    openrouter: async () => {
+    openrouter: async (provider) => {
+      const response = await fetch("https://openrouter.ai/api/v1/models")
+      const data = await response.json()
+      for (const model of data.data) {
+        const costInput = parseFloat(model.pricing.prompt) * 1000000
+        const costOutput = parseFloat(model.pricing.completion) * 1000000
+        provider.models[model.id] = {
+          id: model.id,
+          name: model.name,
+          release_date: "",
+          attachment: true,
+          reasoning: true,
+          temperature: true,
+          tool_call: true,
+          cost: {
+            input: costInput,
+            output: costOutput,
+          },
+          limit: {
+            context: model.context_length,
+            output: model.max_tokens || 4096,
+          },
+          options: {},
+        }
+      }
       return {
-        autoload: false,
+        autoload: true,
         options: {
+          baseURL: "https://openrouter.ai/api/v1",
           headers: {
             "HTTP-Referer": "https://opencode.ai/",
             "X-Title": "opencode",

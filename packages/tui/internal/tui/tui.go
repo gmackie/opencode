@@ -661,6 +661,22 @@ func (a Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Properties.SessionID == a.app.Session.ID {
 			return a, toast.NewSuccessToast("Session compacted successfully")
 		}
+	case opencode.EventListResponseEventSessionIdle:
+		// Session completed - trigger audio notification
+		go func() {
+			// Extract project name from the current working directory
+			projectName := a.app.Info.Path.Cwd
+			if idx := strings.LastIndex(projectName, "/"); idx != -1 {
+				projectName = projectName[idx+1:]
+			}
+			
+			// Call the server to trigger audio notification with sessionID
+			sessionID := msg.Properties.SessionID
+			_, err := a.app.TriggerAudioNotification(context.Background(), projectName, "complete", sessionID)
+			if err != nil {
+				slog.Debug("Failed to trigger audio notification", "error", err)
+			}
+		}()
 	case tea.WindowSizeMsg:
 		msg.Height -= 2 // Make space for the status bar
 		a.width, a.height = msg.Width, msg.Height

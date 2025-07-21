@@ -1205,6 +1205,36 @@ export namespace Server {
         },
       )
       .post(
+        "/audio/notify",
+        describeRoute({
+          description: "Trigger audio notification",
+          responses: {
+            200: {
+              description: "Notification triggered",
+              content: {
+                "application/json": {
+                  schema: resolver(z.boolean()),
+                },
+              },
+            },
+          },
+        }),
+        validator(
+          "json",
+          z.object({
+            projectName: z.string(),
+            status: z.string(),
+            sessionID: z.string().optional(),
+          }),
+        ),
+        async (c) => {
+          const { projectName, status, sessionID } = c.req.valid("json")
+          const { ElevenLabs } = await import("../audio/elevenlabs")
+          await ElevenLabs.saySessionComplete(projectName, sessionID || status)
+          return c.json(true)
+        },
+      )
+      .post(
         "/tui/append-prompt",
         describeRoute({
           description: "Append prompt to the TUI",

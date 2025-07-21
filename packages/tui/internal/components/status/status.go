@@ -1,6 +1,7 @@
 package status
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"github.com/charmbracelet/lipgloss/v2"
 	"github.com/charmbracelet/lipgloss/v2/compat"
 	"github.com/fsnotify/fsnotify"
+	opencode "github.com/sst/opencode-sdk-go"
 	"github.com/sst/opencode/internal/app"
 	"github.com/sst/opencode/internal/commands"
 	"github.com/sst/opencode/internal/layout"
@@ -34,17 +36,43 @@ type statusComponent struct {
 	width      int
 	cwd        string
 	branch     string
+	totalCost  float64
 	watcher    *fsnotify.Watcher
 	done       chan struct{}
 	lastUpdate time.Time
 }
 
 func (m *statusComponent) Init() tea.Cmd {
+	m.totalCost = m.calculateTotalCost()
 	return m.startGitWatcher()
+}
+
+func (m *statusComponent) calculateTotalCost() float64 {
+	var sum float64
+	for i, msg := range m.app.Messages {
+		if ass, ok := msg.Info.(opencode.AssistantMessage); ok {
+			sum += ass.Cost
+			if i == len(m.app.Messages)-1 && ass.Time.Completed == 0 {
+				var textLen int
+				for _, part := range msg.Parts {
+					if text, ok := part.(opencode.TextPart); ok {
+						textLen += len(text.Text)
+					}
+				}
+				estimatedTokens := float64(textLen) / 4
+				estimatedCost := estimatedTokens * m.app.Model.Cost.Output / 1000000
+				sum += estimatedCost
+			}
+		}
+	}
+	return sum
 }
 
 func (m *statusComponent) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case opencode.EventListResponseEventMessagePartUpdated,
+		opencode.EventListResponseEventMessageUpdated:
+		m.totalCost = m.calculateTotalCost()
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		return m, nil
@@ -81,6 +109,7 @@ func (m *statusComponent) logo() string {
 		Render(content)
 }
 
+<<<<<<< HEAD
 func (m *statusComponent) collapsePath(path string, maxWidth int) string {
 	if lipgloss.Width(path) <= maxWidth {
 		return path

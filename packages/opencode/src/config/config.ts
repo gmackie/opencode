@@ -548,6 +548,22 @@ export namespace Config {
         })
         .optional(),
       tools: z.record(z.string(), z.boolean()).optional(),
+      audio: z
+        .object({
+          enabled: z.boolean().default(false).describe("Enable audio notifications"),
+          elevenlabs_api_key: z.string().optional().describe("ElevenLabs API key for text-to-speech"),
+          voice_id: z.string().optional().describe("ElevenLabs voice ID to use (defaults to Rachel)"),
+          persona: z
+            .object({
+              enabled: z.boolean().default(true).describe("Enable persona-based message transformation"),
+              style: z.string().optional().describe("Custom persona style description"),
+              examples: z.array(z.string()).optional().describe("Example phrases in the persona's style"),
+            })
+            .optional()
+            .describe("Persona settings for audio messages"),
+        })
+        .optional()
+        .describe("Audio notification settings"),
       experimental: z
         .object({
           hook: z
