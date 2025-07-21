@@ -18,6 +18,7 @@ import { StatsCommand } from "./cli/cmd/stats"
 import { McpCommand } from "./cli/cmd/mcp"
 import { InstallGithubCommand } from "./cli/cmd/install-github"
 import { Trace } from "./trace"
+import { UsageCommand } from "./cli/cmd/usage"
 
 Trace.init()
 
@@ -77,6 +78,7 @@ const cli = yargs(hideBin(process.argv))
   .command(ModelsCommand)
   .command(StatsCommand)
   .command(InstallGithubCommand)
+  .command(UsageCommand)
   .fail((msg) => {
     if (msg.startsWith("Unknown argument") || msg.startsWith("Not enough non-option arguments")) {
       cli.showHelp("log")

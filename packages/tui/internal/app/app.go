@@ -622,6 +622,21 @@ func (a *App) ListProviders(ctx context.Context) ([]opencode.Provider, error) {
 	return providers.Providers, nil
 }
 
+func (a *App) TriggerAudioNotification(ctx context.Context, projectName string, status string, sessionID string) (bool, error) {
+	body := opencode.AudioNotifyParams{
+		ProjectName: projectName,
+		Status:      status,
+		SessionID:   &sessionID,
+	}
+	
+	response, err := a.Client.Audio.Notify(ctx, body)
+	if err != nil {
+		return false, err
+	}
+	
+	return *response, nil
+}
+
 // func (a *App) loadCustomKeybinds() {
 //
 // }

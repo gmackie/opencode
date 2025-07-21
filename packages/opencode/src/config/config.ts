@@ -179,6 +179,22 @@ export namespace Config {
       mcp: z.record(z.string(), Mcp).optional().describe("MCP (Model Context Protocol) server configurations"),
       instructions: z.array(z.string()).optional().describe("Additional instruction files or patterns to include"),
       layout: Layout.optional().describe("@deprecated Always uses stretch layout."),
+      audio: z
+        .object({
+          enabled: z.boolean().default(false).describe("Enable audio notifications"),
+          elevenlabs_api_key: z.string().optional().describe("ElevenLabs API key for text-to-speech"),
+          voice_id: z.string().optional().describe("ElevenLabs voice ID to use (defaults to Rachel)"),
+          persona: z
+            .object({
+              enabled: z.boolean().default(true).describe("Enable persona-based message transformation"),
+              style: z.string().optional().describe("Custom persona style description"),
+              examples: z.array(z.string()).optional().describe("Example phrases in the persona's style"),
+            })
+            .optional()
+            .describe("Persona settings for audio messages"),
+        })
+        .optional()
+        .describe("Audio notification settings"),
       experimental: z
         .object({
           hook: z
