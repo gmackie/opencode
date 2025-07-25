@@ -440,14 +440,24 @@ func (a appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case opencode.EventListResponseEventSessionIdle:
-		// Session completed - trigger audio notification
+		// Session completed - refresh messages to show final AI response
+		if msg.Properties.SessionID == a.app.Session.ID {
+			messages, err := a.app.ListMessages(context.Background(), msg.Properties.SessionID)
+			if err != nil {
+				slog.Error("Failed to refresh messages on session idle", "error", err.Error())
+			} else {
+				a.app.Messages = messages
+			}
+		}
+
+		// Also trigger audio notification
 		go func() {
 			// Extract project name from the current working directory
 			projectName := a.app.Info.Path.Cwd
 			if idx := strings.LastIndex(projectName, "/"); idx != -1 {
 				projectName = projectName[idx+1:]
 			}
-			
+
 			// Call the server to trigger audio notification with sessionID
 			sessionID := msg.Properties.SessionID
 			_, err := a.app.TriggerAudioNotification(context.Background(), projectName, "complete", sessionID)

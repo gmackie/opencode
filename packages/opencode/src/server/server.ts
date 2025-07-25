@@ -100,24 +100,25 @@ export namespace Server {
           },
         }),
         async (c) => {
-          log.info("event connected")
-          return streamSSE(c, async (stream) => {
-            stream.writeSSE({
-              data: JSON.stringify({}),
-            })
-            const unsub = Bus.subscribeAll(async (event) => {
-              await stream.writeSSE({
-                data: JSON.stringify(event),
-              })
-            })
-            await new Promise<void>((resolve) => {
-              stream.onAbort(() => {
-                unsub()
-                resolve()
-                log.info("event disconnected")
-              })
-            })
-          })
+          const { projectName, status, sessionID } = c.req.valid("json")
+          const { ElevenLabs } = await import("../audio/elevenlabs")
+
+          // Use sessionID if provided, otherwise log the issue and use a fallback
+          if (sessionID) {
+            await ElevenLabs.saySessionComplete(projectName, sessionID)
+          } else {
+            console.warn("No sessionID provided for audio notification, using status as fallback:", status)
+            // Create a simple completion message since we don't have session context
+            const { Persona } = await import("../audio/persona")
+            const cfg = await (await import("../config/config")).Config.get()
+            const personaMessage = await Persona.transformToPersona(
+              `Session completed: ${status}`,
+              projectName,
+              cfg.audio?.persona,
+            )
+            await ElevenLabs.speak(personaMessage)
+          }
+          return c.json(true)
         },
       )
       .get(
@@ -729,7 +730,20 @@ export namespace Server {
         async (c) => {
           const { projectName, status, sessionID } = c.req.valid("json")
           const { ElevenLabs } = await import("../audio/elevenlabs")
-          await ElevenLabs.saySessionComplete(projectName, sessionID || status)
+          // Only call saySessionComplete if we have a valid sessionID
+          if (sessionID) {
+            await ElevenLabs.saySessionComplete(projectName, sessionID)
+          } else {
+            // Fallback to a simple message if no sessionID
+            const { Persona } = await import("../audio/persona")
+            const personaMessage = await Persona.transformToPersona(
+              status,
+              projectName,
+              (await import("../config/config")).Config.get().then((cfg) => cfg.audio?.persona),
+            )
+            const { ElevenLabs: EL } = await import("../audio/elevenlabs")
+            await EL.speak(personaMessage)
+          }
           return c.json(true)
         },
       )

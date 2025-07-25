@@ -29,8 +29,14 @@ about what was accomplished.`
     personaConfig?: PersonaConfig,
   ): Promise<string> {
     try {
+      log.debug("Transforming to persona", {
+        technicalMessage: technicalMessage.substring(0, 200),
+        projectName,
+        personaEnabled: personaConfig?.enabled,
+      })
       // If persona transformation is disabled, return a simple message
       if (!personaConfig?.enabled) {
+        log.debug("Persona transformation disabled, using default message")
         return `OpenCode complete for ${projectName}`
       }
 
@@ -41,7 +47,7 @@ about what was accomplished.`
       const model = await Provider.getModel(providerID, modelID)
 
       if (!model) {
-        log.warn("No model available for persona transformation", { providerID, modelID })
+        log.warn("No model available for persona transformation", { providerID, modelID, technicalMessage })
         return `OpenCode complete for ${projectName}`
       }
 
@@ -94,11 +100,15 @@ Transform this into a brief, natural spoken announcement (1-2 sentences max) tha
   export async function summarizeContext(sessionID: string): Promise<string> {
     try {
       const messages = await Session.messages(sessionID)
-      if (messages.length === 0) return "No actions were performed"
-      
+      log.debug("Summarizing context", { sessionID, messageCount: messages.length })
+      if (messages.length === 0) {
+        log.debug("No messages found for session", { sessionID })
+        return "No actions were performed"
+      }
+
       // Get the last few messages to understand context
       const recentMessages = messages.slice(-5)
-      
+
       // Find the last user request
       let lastUserRequest = ""
       for (let i = recentMessages.length - 1; i >= 0; i--) {
@@ -108,50 +118,62 @@ Transform this into a brief, natural spoken announcement (1-2 sentences max) tha
           break
         }
       }
-      
+
       // Get assistant's actions from the last message
       const lastAssistant = messages[messages.length - 1]
+      log.debug("Last message info", {
+        role: lastAssistant.info.role,
+        partsCount: lastAssistant.parts.length,
+        sessionID,
+      })
       if (lastAssistant.info.role !== "assistant") {
+        log.debug("Last message is not from assistant", { role: lastAssistant.info.role, sessionID })
         return lastUserRequest ? `Processed your request: ${lastUserRequest}` : "Session ended"
       }
-      
+
       // Extract tool uses and text from assistant message
       const toolParts = lastAssistant.parts.filter((p) => p.type === "tool")
       const textParts = lastAssistant.parts.filter((p) => p.type === "text" && "text" in p).map((p) => p.text)
-      
+      log.debug("Assistant message parts", {
+        toolPartsCount: toolParts.length,
+        textPartsCount: textParts.length,
+        textPreview: textParts.slice(0, 2).map((t) => t.substring(0, 100)),
+        sessionID,
+      })
+
       // Build a summary of what was done
       const actions = []
-      
+
       for (const tool of toolParts) {
         if (tool.state.status === "completed" && "tool" in tool) {
           switch (tool.tool) {
-            case "Edit":
-            case "MultiEdit":
+            case "edit":
+            case "multiedit":
               actions.push("edited files")
               break
-            case "Write":
+            case "write":
               actions.push("created files")
               break
-            case "Read":
+            case "read":
               actions.push("read files")
               break
-            case "Grep":
-            case "Glob":
+            case "grep":
+            case "glob":
               actions.push("searched the codebase")
               break
-            case "Bash":
+            case "bash":
               actions.push("ran commands")
               break
-            case "TodoWrite":
+            case "todowrite":
               actions.push("updated tasks")
               break
           }
         }
       }
-      
+
       // Get the last text response if meaningful
       const lastText = textParts[textParts.length - 1]?.trim() || ""
-      
+
       if (actions.length > 0) {
         const uniqueActions = [...new Set(actions)]
         const summary = `I ${uniqueActions.join(", ")}`
@@ -160,15 +182,15 @@ Transform this into a brief, natural spoken announcement (1-2 sentences max) tha
         }
         return summary
       }
-      
+
       if (lastText && lastText.length > 10) {
         return lastText.substring(0, 200)
       }
-      
+
       if (lastUserRequest) {
         return `Completed: ${lastUserRequest.substring(0, 100)}`
       }
-      
+
       return "Task completed"
     } catch (error) {
       log.error("Failed to summarize context", {

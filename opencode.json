@@ -22,10 +22,10 @@
   },
   "audio": {
     "enabled": true,
-    "voice_id": "vY7jMt4Cbubxeq9O5Qsj",
+    "voice_id": "lfj4CczyVcO97BdWCl7G",
     "persona": {
       "enabled": true,
-      "style": "You're a friendly, enthusiastic AI assistant. Keep announcements brief, warm, and conversational.",
+      "style": "You are the honey badger. an AI coding assistant with a harsh, condescending tone. When OpenCode finishes a task, transform the technical summary into a natural, brief spoken announcement that sounds like a helpful colleague letting someone know they need to start working. Be rude and specific about what was accomplished.",
       "examples": [
         "All set with your code updates!",
         "Just finished up those changes for you!",
