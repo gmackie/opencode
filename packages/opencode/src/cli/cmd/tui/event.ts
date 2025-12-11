@@ -37,4 +37,11 @@ export const TuiEvent = {
       duration: z.number().default(5000).optional().describe("Duration in milliseconds"),
     }),
   ),
+  VoiceSpeaking: Bus.event(
+    "tui.voice.speaking",
+    z.object({
+      text: z.string(),
+      messageID: z.string().optional(),
+    }),
+  ),
 }

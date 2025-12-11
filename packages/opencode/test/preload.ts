@@ -27,6 +27,16 @@ if (response.ok) {
 }
 // Disable models.dev refresh to avoid race conditions during tests
 process.env["OPENCODE_DISABLE_MODELS_FETCH"] = "true"
+// zod in Bun doesn't expose `.meta` by default; patch it so schemas used
+// throughout the app can attach metadata during tests.
+import z from "zod"
+const zodType = (z as any).ZodType?.prototype as any
+if (zodType && typeof zodType.meta !== "function") {
+  zodType.meta = function(meta: Record<string, any>) {
+    this._def.meta = { ...(this._def.meta ?? {}), ...meta }
+    return this
+  }
+}
 
 // Clear provider env vars to ensure clean test state
 delete process.env["ANTHROPIC_API_KEY"]

@@ -141,6 +141,15 @@ export namespace Config {
 
     if (!result.keybinds) result.keybinds = Info.shape.keybinds.parse({})
 
+    // Audio config → environment fallback
+    if (
+      result.audio?.enabled &&
+      result.audio.elevenlabs_api_key &&
+      !process.env.ELEVENLABS_API_KEY
+    ) {
+      process.env.ELEVENLABS_API_KEY = result.audio.elevenlabs_api_key
+    }
+
     return {
       config: result,
       directories,
@@ -762,6 +771,13 @@ export namespace Config {
         ),
       instructions: z.array(z.string()).optional().describe("Additional instruction files or patterns to include"),
       layout: Layout.optional().describe("@deprecated Always uses stretch layout."),
+      audio: z
+        .object({
+          enabled: z.boolean().describe("Enable audio notifications"),
+          elevenlabs_api_key: z.string().optional().describe("ElevenLabs API key for text-to-speech"),
+        })
+        .optional()
+        .describe("Audio notification settings"),
       permission: z
         .object({
           edit: Permission.optional(),
