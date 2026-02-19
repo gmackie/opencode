@@ -24,3 +24,7 @@ target
 # Local dev files
 opencode-dev
 logs/
+
+# Claude Code
+.claude/settings.local.json
+session-ses_*.md
